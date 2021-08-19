@@ -29,7 +29,11 @@ app.get('/', async (req, res) => {
         }
     }
 
-    if(client.auth) {
+    // attempt getting stored token
+    if(!credentials) credentials = await getCredentials()
+    client = await authorize(credentials)
+
+    if(typeof client === 'object' && client.auth) {
         res.sendFile(path.join(__dirname, '/add.html'))
     } else {
         res.sendFile(path.join(__dirname, '/index.html'))
