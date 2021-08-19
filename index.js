@@ -21,10 +21,14 @@ app.get('/', async (req, res) => {
     console.log('new get: ', req.query)
     if (req.query.code) {
         // successful OAuth2 post
-        console.log('new token:' , req.query.code)
-        if(client && client.auth) client.auth = await getNewToken(client.auth)
+        console.log('new token:', req.query.code)
+        if (client && client.auth) {
+            let updating = client
+            updating.auth.credentials = req.query.code
+            client.auth = await getNewToken(updating.auth)
+        }
     }
-    
+
     res.sendFile(path.join(__dirname, '/index.html'))
 })
 
