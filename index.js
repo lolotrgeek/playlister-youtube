@@ -3,8 +3,6 @@ let api_key = "AIzaSyCB3p3A2mcCaI1lVvB0H9HRzY529sH9lzI"
 let base = "https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.playlistItems.update?part=snippet"
 let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
-let token
-
 const express = require('express')
 const app = express()
 const port = process.env.PORT || 80

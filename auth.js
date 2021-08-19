@@ -170,4 +170,4 @@ function addVideoToPlaylist(auth, playlistId, videoId) {
   })
 }
 
-module.exports = { getCredentials, getToken, authorize, reAuthorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
+module.exports = { getCredentials, getToken, authorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
