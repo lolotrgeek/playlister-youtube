@@ -29,7 +29,12 @@ app.get('/', async (req, res) => {
         }
     }
 
-    res.sendFile(path.join(__dirname, '/index.html'))
+    if(client.auth) {
+        res.sendFile(path.join(__dirname, '/add.html'))
+    } else {
+        res.sendFile(path.join(__dirname, '/index.html'))
+    }
+    
 })
 
 app.post('/', async (req, res) => {
@@ -56,6 +61,7 @@ app.post('/', async (req, res) => {
 
         else {
             console.log('Unparsed post: ', req.body)
+            res.sendFile(path.join(__dirname, '/add.html'))
         }
     } catch (err) {
         console.error(err)
