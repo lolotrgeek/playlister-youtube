@@ -69,10 +69,10 @@ function authorize(credentials) {
         resolve({ auth: oauth2Client })
 
       } else {
-        resolve({ auth: oauth2Client, url: getAuthUrl(oauth2Client) })
+        resolve({ auth: oauth2Client, url: await getAuthUrl(oauth2Client) })
       }
     } catch (err) {
-      resolve({ auth: oauth2Client, url: getAuthUrl(oauth2Client) })
+      resolve({ auth: oauth2Client, url: await getAuthUrl(oauth2Client) })
     }
 
   })

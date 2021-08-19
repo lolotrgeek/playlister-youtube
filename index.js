@@ -27,7 +27,7 @@ app.post('/', async (req, res) => {
             console.log(req.body.auth)
             credentials = await getCredentials()
             client = await authorize(credentials)
-            if (client.url) res.redirect(client.url)
+            if (typeof client.url === "string") res.redirect(client.url)
         }
 
         if (req.body.code) {
