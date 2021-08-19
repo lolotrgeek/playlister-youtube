@@ -147,11 +147,8 @@ function getChannel(auth) {
       if (channels.length == 0) {
         reject('No channel found.')
       } else {
-        resolve('This channel\'s ID is %s. Its title is \'%s\', and ' +
-          'it has %s views.',
-          channels[0].id,
-          channels[0].snippet.title,
-          channels[0].statistics.viewCount)
+        let output = `This channel's ID is ${channels[0].id}. Its title is ${channels[0].snippet.title}', and it has ${channels[0].statistics.viewCount} views.`
+        resolve(output)
       }
     })
   })
