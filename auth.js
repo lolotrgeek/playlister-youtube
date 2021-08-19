@@ -155,19 +155,24 @@ function getChannel(auth) {
 }
 
 function addVideoToPlaylist(auth, playlistId, videoId) {
-  const service = google.youtube('v3')
-  return service.playlistItems.insert({
-    auth: auth,
-    part: 'snippet',
-    requestBody: {
-      snippet: {
-        playlistId: playlistId,
-        resourceId: {
-          kind: "youtube#video",
-          videoId: videoId
+  return new Promise((resolve, reject) => {
+    const service = google.youtube('v3')
+    service.playlistItems.insert({
+      auth: auth,
+      part: 'snippet',
+      requestBody: {
+        snippet: {
+          playlistId: playlistId,
+          resourceId: {
+            kind: "youtube#video",
+            videoId: videoId
+          }
         }
       }
-    }
+    }, err => {
+      if(err) reject(err)
+      resolve('success')
+    })
   })
 }
 

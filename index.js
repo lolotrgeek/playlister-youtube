@@ -43,11 +43,13 @@ app.post('/', async (req, res) => {
 
 
         if (req.body.playlist) {
-            console.log(req.body.playlist)
+            console.log('playlist:', req.body.playlist)
             if (client.auth && client.auth.credentials) {
-                let channel_info = await getChannel(client.auth)
-                res.send(JSON.stringify(channel_info))
-                await addVideoToPlaylist(client.auth, playlist, "DZYF2aXbLBY")
+                console.log('Adding Video...')
+                let output = await addVideoToPlaylist(client.auth, playlist, "DZYF2aXbLBY")
+
+                // let channel_info = await getChannel(client.auth)
+                res.send(JSON.stringify(output))
             }
         }
         else {
