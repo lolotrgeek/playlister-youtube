@@ -10,7 +10,8 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const { authorize, getChannel, storeToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
+const { authorize, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
+const { json } = require('express')
 
 let credentials
 let client
@@ -40,23 +41,25 @@ app.post('/', async (req, res) => {
             if (typeof client.url === "string") res.redirect(client.url)
         }
 
-
-
-        if (req.body.playlist) {
+        if (req.body.playlist && req.body.videos) {
             console.log('playlist:', req.body.playlist)
+            let videoIds = req.body.videos.split(',')
             if (client.auth && client.auth.credentials) {
-                console.log('Adding Video...')
-                let output = await addVideoToPlaylist(client.auth, playlist, "DZYF2aXbLBY")
-
-                // let channel_info = await getChannel(client.auth)
-                res.send(JSON.stringify(output))
+                let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
+                Promise.allSettled(videosToAdd).then(results => {
+                    let filteredresults = results.filter(result => result.status === "fulfilled")
+                    let output = `added ${results.length}/${videoIds.length} | errors: ${JSON.stringify(filteredresults)}`
+                    res.send(output)
+                })
             }
         }
+
         else {
-            console.log('Unparsed submission post: ', req.body)
+            console.log('Unparsed post: ', req.body)
         }
     } catch (err) {
         console.error(err)
+        res.send(err)
     }
 
 })
