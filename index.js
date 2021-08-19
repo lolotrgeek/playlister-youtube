@@ -55,7 +55,7 @@ app.post('/', async (req, res) => {
 
         if (req.body.playlist && req.body.videos) {
             console.log('playlist:', req.body.playlist)
-            let videoIds = req.body.videos.trim().split(',')
+            let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',')
             if (client.auth && client.auth.credentials) {
                 let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
                 Promise.allSettled(videosToAdd).then(results => {
