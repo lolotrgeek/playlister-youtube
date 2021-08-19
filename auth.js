@@ -56,8 +56,8 @@ function getAuthUrl(oauth2Client, callback) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-async function authorize(credentials) {
-  return new Promise((resolve, reject) => {
+function authorize(credentials) {
+  return new Promise(async (resolve, reject) => {
     var clientSecret = credentials.installed.client_secret
     var clientId = credentials.installed.client_id
     var redirectUrl = credentials.installed.redirect_uris[0]
@@ -83,8 +83,8 @@ async function authorize(credentials) {
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-async function getNewToken(oauth2Client) {
-  return new Promise((resolve, reject) => {
+function getNewToken(oauth2Client) {
+  return new Promise(async (resolve, reject) => {
     oauth2Client.getToken(code, function (err, token) {
       if (err) {
         reject('Error while trying to retrieve access token', err)
