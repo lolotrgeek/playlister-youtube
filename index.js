@@ -17,7 +17,7 @@ let client
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
     console.log('new post: ', req.body)
     if (req.body.code) {
         // successful OAuth2 post
