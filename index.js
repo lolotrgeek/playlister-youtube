@@ -59,8 +59,9 @@ app.post('/', async (req, res) => {
             if (client.auth && client.auth.credentials) {
                 let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
                 Promise.allSettled(videosToAdd).then(results => {
-                    let filteredresults = results.filter(result => result.status === "fulfilled")
-                    let output = `added ${results.length}/${videoIds.length} | errors: ${JSON.stringify(filteredresults)}`
+                    let succeeded = results.filter(result => result.status === "fulfilled")
+                    let failed = results.filter(result => result.status === "rejected")
+                    let output = `added ${succeeded.length}/${videoIds.length} | errors: ${JSON.stringify(failed)}`
                     res.send(output)
                 })
             }
