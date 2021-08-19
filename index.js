@@ -10,10 +10,11 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const { authorize, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
+const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
 const { json } = require('express')
 
 let credentials
+let token
 let client
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -28,17 +29,17 @@ app.get('/', async (req, res) => {
             client.auth = await getNewToken(req.query.code, updating)
         }
     }
-
     // attempt getting stored token
-    if(!credentials) credentials = await getCredentials()
-    client = await authorize(credentials)
-
-    if(typeof client === 'object' && client.auth) {
-        res.sendFile(path.join(__dirname, '/add.html'))
-    } else {
+    if (!credentials) credentials = await getCredentials()
+    token = await getToken()
+    if (token) {
+        client = await authorize(credentials, token)
+        if(client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
+    }
+    else {
         res.sendFile(path.join(__dirname, '/index.html'))
     }
-    
+
 })
 
 app.post('/', async (req, res) => {
@@ -65,7 +66,9 @@ app.post('/', async (req, res) => {
 
         else {
             console.log('Unparsed post: ', req.body)
-            res.sendFile(path.join(__dirname, '/add.html'))
+            if(token && client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
+            else res.sendFile(path.join(__dirname, '/index.html'))
+            
         }
     } catch (err) {
         console.error(err)

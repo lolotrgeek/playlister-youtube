@@ -56,28 +56,22 @@ function getAuthUrl(oauth2Client, callback) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials) {
+function authorize(credentials, token) {
   return new Promise(async (resolve, reject) => {
     var clientSecret = credentials.installed.client_secret
     var clientId = credentials.installed.client_id
     var redirectUrl = credentials.installed.redirect_uris[0]
     var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl)
-    try {
-      let token = await getToken()
-      if (token) {
-        oauth2Client.credentials = token
-        resolve({ auth: oauth2Client })
-
-      } else {
-        resolve({ auth: oauth2Client, url: await getAuthUrl(oauth2Client) })
-      }
-    } catch (err) {
-      resolve({ auth: oauth2Client, url: await getAuthUrl(oauth2Client) })
+    let auth = oauth2Client
+    if (token) {
+      oauth2Client.credentials = token
+      resolve({auth})
+    } else {
+      let url = await getAuthUrl(oauth2Client)
+      resovlve({auth, url})
     }
-
   })
 }
-
 
 
 /**
@@ -170,10 +164,10 @@ function addVideoToPlaylist(auth, playlistId, videoId) {
         }
       }
     }, err => {
-      if(err) reject(`${videoId} : ${JSON.stringify(err)}`)
+      if (err) reject(`${videoId} : ${JSON.stringify(err)}`)
       resolve(videoId + ' success')
     })
   })
 }
 
-module.exports = { getCredentials, authorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
+module.exports = { getCredentials, getToken, authorize, reAuthorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
