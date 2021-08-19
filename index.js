@@ -28,11 +28,15 @@ app.get('/', async (req, res) => {
         }
     }
     // attempt getting stored token
-    if (!credentials) credentials = await getCredentials()
-    token = await getToken()
+    try {
+        if (!credentials) credentials = await getCredentials()
+        token = await getToken()
+    } catch (error) {
+        res.sendFile(path.join(__dirname, '/index.html'))
+    }
     if (token) {
         client = await authorize(credentials, token)
-        if(client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
+        if (client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
     }
     else {
         res.sendFile(path.join(__dirname, '/index.html'))
@@ -45,7 +49,7 @@ app.post('/', async (req, res) => {
         if (req.body.auth) {
             console.log(req.body.auth)
             credentials = await getCredentials()
-            client = await authorize(credentials)
+            client = await authorize(credentials, null)
             if (typeof client.url === "string") res.redirect(client.url)
         }
 
@@ -64,9 +68,9 @@ app.post('/', async (req, res) => {
 
         else {
             console.log('Unparsed post: ', req.body)
-            if(token && client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
+            if (token && client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
             else res.sendFile(path.join(__dirname, '/index.html'))
-            
+
         }
     } catch (err) {
         console.error(err)
