@@ -68,7 +68,7 @@ function authorize(credentials, token) {
       resolve({auth})
     } else {
       let url = await getAuthUrl(oauth2Client)
-      resovlve({auth, url})
+      resolve({auth, url})
     }
   })
 }
