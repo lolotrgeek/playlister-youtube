@@ -43,6 +43,9 @@ app.post('/', async (req, res) => {
                 res.send(JSON.stringify(channel_info))
             }
         }
+        else {
+            console.log('Unparsed post: ', req.body)
+        }
     } catch (err) {
         console.error(err)
     }
