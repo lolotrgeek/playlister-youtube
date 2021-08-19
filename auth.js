@@ -84,8 +84,8 @@ function authorize(credentials) {
  *     client.
  */
 function getNewToken(oauth2Client) {
-  return new Promise(async (resolve, reject) => {
-    oauth2Client.getToken(code, function (err, token) {
+  return new Promise((resolve, reject) => {
+    oauth2Client.getToken(code, async (err, token) => {
       if (err) {
         reject('Error while trying to retrieve access token', err)
         return
