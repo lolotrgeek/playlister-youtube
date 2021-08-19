@@ -23,9 +23,8 @@ app.get('/', async (req, res) => {
         // successful OAuth2 post
         console.log('new token:', req.query.code)
         if (client && client.auth) {
-            let updating = client
-            updating.auth.credentials = req.query.code
-            client.auth = await getNewToken(updating.auth)
+            let updating = client.auth
+            client.auth = await getNewToken(req.query.code, updating)
         }
     }
 

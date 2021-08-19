@@ -88,7 +88,7 @@ function authorize(credentials) {
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-function getNewToken(oauth2Client) {
+function getNewToken(code, oauth2Client) {
   return new Promise((resolve, reject) => {
     oauth2Client.getToken(code, async (err, token) => {
       if (err) {
