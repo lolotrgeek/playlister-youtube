@@ -18,6 +18,13 @@ let client
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', (req, res) => {
+    console.log('new post: ', req.body)
+    if (req.body.code) {
+        // successful OAuth2 post
+        console.log('new token:' , req.body.code)
+        if(client && client.auth) client.auth = await getNewToken(client.auth)
+    }
+    
     res.sendFile(path.join(__dirname, '/index.html'))
 })
 
@@ -30,11 +37,7 @@ app.post('/', async (req, res) => {
             if (typeof client.url === "string") res.redirect(client.url)
         }
 
-        if (req.body.code) {
-            // successful OAuth2 post
-            console.log(req.body.code)
-            client.auth = await getNewToken(client.auth)
-        }
+
 
         if (req.body.playlist) {
             console.log(req.body.playlist)
@@ -44,7 +47,7 @@ app.post('/', async (req, res) => {
             }
         }
         else {
-            console.log('Unparsed post: ', req.body)
+            console.log('Unparsed submission post: ', req.body)
         }
     } catch (err) {
         console.error(err)
