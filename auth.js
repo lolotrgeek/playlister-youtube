@@ -154,4 +154,21 @@ function getChannel(auth) {
   })
 }
 
-module.exports = { getCredentials, authorize, getNewToken, storeToken, getChannel }
+function addVideoToPlaylist(auth, playlistId, videoId) {
+  const service = google.youtube('v3')
+  return service.playlistItems.insert({
+    auth: auth,
+    part: 'snippet',
+    requestBody: {
+      snippet: {
+        playlistId: playlistId,
+        resourceId: {
+          kind: "youtube#video",
+          videoId: videoId
+        }
+      }
+    }
+  })
+}
+
+module.exports = { getCredentials, authorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }

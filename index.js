@@ -1,7 +1,7 @@
 
 let api_key = "AIzaSyCB3p3A2mcCaI1lVvB0H9HRzY529sH9lzI"
 let base = "https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.playlistItems.update?part=snippet"
-// let list_id = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
+let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
 let token
 
@@ -10,7 +10,7 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const { authorize, getChannel, storeToken, getNewToken, getCredentials } = require("./auth")
+const { authorize, getChannel, storeToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
 
 let credentials
 let client
@@ -47,6 +47,7 @@ app.post('/', async (req, res) => {
             if (client.auth && client.auth.credentials) {
                 let channel_info = await getChannel(client.auth)
                 res.send(JSON.stringify(channel_info))
+                await addVideoToPlaylist(client.auth, playlist, "DZYF2aXbLBY")
             }
         }
         else {
