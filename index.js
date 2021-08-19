@@ -18,8 +18,8 @@ let client
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
-    console.log('new post: ', req.body)
-    if (req.body.code) {
+    console.log('new get: ', req.query)
+    if (req.query.code) {
         // successful OAuth2 post
         console.log('new token:' , req.body.code)
         if(client && client.auth) client.auth = await getNewToken(client.auth)
