@@ -62,14 +62,19 @@ function authorize(credentials) {
     var clientId = credentials.installed.client_id
     var redirectUrl = credentials.installed.redirect_uris[0]
     var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl)
-    let token = await getToken()
-    if (token) {
-      oauth2Client.credentials = token
-      resolve({ auth: oauth2Client })
+    try {
+      let token = await getToken()
+      if (token) {
+        oauth2Client.credentials = token
+        resolve({ auth: oauth2Client })
 
-    } else {
+      } else {
+        resolve({ auth: oauth2Client, url: getAuthUrl(oauth2Client) })
+      }
+    } catch (err) {
       resolve({ auth: oauth2Client, url: getAuthUrl(oauth2Client) })
     }
+
   })
 }
 
