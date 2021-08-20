@@ -7,7 +7,11 @@ let ws = new ReconnectingWebSocket(WS_URL, [], options)
 
 ws.onopen = () => {
     console.log(`Connected to ${WS_URL}`)
-    ws.send("CLIENT")
+    send({name: "CLIENT"})
+}
+
+function send(message) {
+    ws.send(JSON.stringify(message))
 }
 
 function listen(callback) {

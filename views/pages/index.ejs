@@ -22,8 +22,8 @@
         <div>
             <%- include('../partials/authorize'); %>
             <%- include('../partials/add'); %>
-
         </div>
+        <div id="output"></div>
     </main>
 
     <footer>
@@ -33,7 +33,10 @@
     <script src="sockets.js"></script>
     <script>
         listen(message => {
-            console.log(message)
+            if(message && message.added) {
+                let output = document.getElementById("output")
+                output.innerText = message
+            }
         })
     </script>
 </body>

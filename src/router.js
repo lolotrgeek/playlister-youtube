@@ -26,22 +26,22 @@ function listen(callback) {
  * Give ws client a name then add to client list
  * @param {*} ws 
  */
-function addClient(ws, data) {
+function addClient(ws, message) {
     if (!ws.name) {
-        let obj = getObject(data)
-        ws.name = obj && obj.name ? obj.name : data
+        ws.name = message && message.name ? message.name : message
         clients.push(ws)
         console.log(` CLIENT "${ws.name}" CONNECTED`)
     }
 }
 
 function parseMessage(ws, data, callback) {
-    let message = data.toString()
-    if (typeof message === 'string') {
-        addClient(ws, message)
-        let msg = callback(message)
-        reply(ws, msg)
-    }
+    let message
+    if (Buffer.isBuffer(data)) message = decode(data)
+    // console.log(message)
+    addClient(ws, message)
+    let msg = callback(message)
+    reply(ws, "Welcome")
+
 }
 
 wsServer.broadcast = function broadcast(msg) {
@@ -70,7 +70,7 @@ function send(client, data) {
         if (clients[i] == ws && ws.readyState === 1) {
             if (ws.name === client) {
                 console.log(` Sending: ${data}`)
-                ws.send(typeof data === 'object' ? JSON.stringify(data) : data )
+                ws.send(typeof data === 'object' ? JSON.stringify(data) : data)
             }
         } else {
             console.log(` CLIENT ${i} DISCONNECTED`)
@@ -79,13 +79,13 @@ function send(client, data) {
     })
 }
 
-function getObject(string) {
+function decode(data) {
     try {
-      return JSON.parse(string)
+        return JSON.parse(data.toString('utf-8'))
     } catch (error) {
-      return false
+        return data.toString('utf-8')
     }
-  }
+}
 
 
 module.exports = { listen, reply, broadcast, send }

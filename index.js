@@ -9,9 +9,8 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const router = require('./src/router')
+const { send } = require('./src/router')
 const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
-const { Router } = require('express')
 
 let max_retries = 3
 
@@ -48,7 +47,7 @@ app.get('/', async (req, res) => {
     }
     if (token) {
         client = await authorize(credentials, token)
-        if(client && client.auth) status = true
+        if (client && client.auth) status = true
     }
     res.render('pages/index', { client, status, output, error })
 })
@@ -107,10 +106,10 @@ app.post('/', async (req, res) => {
 
                     Retrier().then(result => {
                         // todo: show each video request working
-                        output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
+                        output = {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)}
                         console.log(output)
+                        send("CLIENT", output)
                     })
-
                 })
             }
         }
@@ -127,12 +126,6 @@ app.post('/', async (req, res) => {
     }
 
 })
-
-router.listen(message => {
-    console.log(message)
-    router.send("CLIENT", "hello")
-})
-
 
 app.listen(port, () => {
     console.log(`Playlister app listening at http://localhost:${port}`)
