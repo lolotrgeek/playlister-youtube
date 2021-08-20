@@ -4,6 +4,7 @@ let base = "https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.pl
 let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
 const express = require('express')
+const ejs = require('ejs')
 const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
@@ -15,13 +16,14 @@ let max_retries = 3
 let credentials
 let token
 let client
+let status = false // false = not authenticated, true = authenticated
+let output
 
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
     let error
-    let status = false
     console.log('new get: ', req.query)
     if (req.query.code) {
         // successful OAuth2 post
@@ -46,7 +48,7 @@ app.get('/', async (req, res) => {
         client = await authorize(credentials, token)
         if(client && client.auth) status = true
     }
-    res.render('pages/index', { client, status, error })
+    res.render('pages/index', { client, status, output, error })
 })
 
 app.get('/about', (req, res) => {
@@ -55,6 +57,8 @@ app.get('/about', (req, res) => {
 
 app.post('/', async (req, res) => {
     try {
+        res.render('pages/index', { client, status, output, error })
+
         if (req.body.auth) {
             console.log(req.body.auth)
             credentials = await getCredentials()
@@ -98,8 +102,8 @@ app.post('/', async (req, res) => {
 
                     Retrier().then(result => {
                         // todo: show each video request working
-                        let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
-                        res.send(output)
+                        output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
+                        console.log(output)
                     })
 
                 })
@@ -108,8 +112,8 @@ app.post('/', async (req, res) => {
 
         else {
             console.log('Unparsed post: ', req.body)
-            if (token && client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
-            else res.sendFile(path.join(__dirname, '/index.html'))
+            if (token && client && client.auth) status = true
+            else status = false
 
         }
     } catch (err) {
