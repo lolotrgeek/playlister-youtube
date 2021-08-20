@@ -1,5 +1,5 @@
 const express = require('express')
-const { Server } = require('ws');
+const { Server } = require('ws')
 
 const WSPORT = process.env.WSPORT || 3000
 const server = express().listen(WSPORT, () => console.log(`Websocket listening on ${WSPORT}`))
