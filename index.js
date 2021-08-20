@@ -24,8 +24,12 @@ app.get('/', async (req, res) => {
         // successful OAuth2 post
         console.log('new token:', req.query.code)
         if (client && client.auth) {
-            let updating = client.auth
-            client.auth = await getNewToken(req.query.code, updating)
+            try {
+                let updating = client.auth
+                client.auth = await getNewToken(req.query.code, updating)
+            } catch (error) {
+                console.log(error)
+            }
         }
     }
     // attempt getting stored token
@@ -63,30 +67,33 @@ app.post('/', async (req, res) => {
                 Promise.allSettled(videosToAdd).then(results => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
-                    
-                    const Retrier = () => new Promise ((resolve, reject) => {
+
+                    const Retrier = () => new Promise((resolve, reject) => {
                         let count = 0
-                        let retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
+                        let interval = 1000
+                        let retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
                         let retrying = setInterval(() => {
-                            if(count === max_retries) {clearInterval(retrying); resolve({succeeded, failed, count})}
-                            if(failed.length === 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
-                            if(retries.length === 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
-                            console.log(`retrying ${failed}, ${count}, video count: ${retries.length} `)
+                            if (count === max_retries) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
+                            if (failed.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
+                            if (retries.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
+                            console.log(`Retry ${count}, video count: ${retries.length}, interval: ${interval} `)
                             Promise.allSettled(retries).then(retried => {
                                 console.log('retried: ', retried)
                                 retried.forEach((result, i) => {
-                                    if(result.status === "fulfilled") {
+                                    if (result.status === "fulfilled") {
                                         succeeded.push(result)
-                                        retries.splice(i,1)
+                                        retries.splice(i, 1)
                                     }
                                 })
                                 failed = retried.filter(result => result.status === "rejected")
                             })
                             count++
-                        }, 1000)
+                            interval = interval * 2
+                        }, 500)
                     })
 
                     Retrier().then(result => {
+                        // todo: show each video request working
                         let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
                         res.send(output)
                     })

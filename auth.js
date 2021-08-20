@@ -148,8 +148,9 @@ function getChannel(auth) {
   })
 }
 
-function addVideoToPlaylist(auth, playlistId, videoId) {
+function addVideoToPlaylist(auth, playlistId, videoId, interval) {
   return new Promise((resolve, reject) => {
+    if(!interval) interval = 500
     const service = google.youtube('v3')
     setTimeout(() => {
       service.playlistItems.insert({
@@ -168,7 +169,7 @@ function addVideoToPlaylist(auth, playlistId, videoId) {
         if (err) reject({ videoId, code: err.code, errors: err.errors })
         resolve(videoId + ' success')
       })
-    }, 500)
+    }, interval)
   })
 }
 
