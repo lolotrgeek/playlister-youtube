@@ -1,8 +1,4 @@
 
-//TODO: revert to serparate ws server, figure out how to get ws to work with heroku
-
-let api_key = "AIzaSyCB3p3A2mcCaI1lVvB0H9HRzY529sH9lzI"
-let base = "https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.playlistItems.update?part=snippet"
 let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
 const express = require('express')
@@ -140,6 +136,10 @@ const wsServer = new Server({ server })
 listen(message => {
     console.log(message)
 })
+// TESTING WS
+// setInterval(() => {
+//     send("CLIENT", {test: "test!"})
+// }, 1000)
 /**
  * 
  * @param {function} callback - do something with incoming message, 
@@ -202,7 +202,7 @@ function send(client, data) {
     clients.forEach((ws, i) => {
         if (clients[i] == ws && ws.readyState === 1) {
             if (ws.name === client) {
-                console.log(` Sending: ${data}`)
+                console.log('Sending:',  data)
                 ws.send(typeof data === 'object' ? JSON.stringify(data) : data)
             }
         } else {

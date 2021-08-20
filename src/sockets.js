@@ -16,6 +16,7 @@ function send(message) {
 
 function listen(callback) {
     ws.onmessage = async (message) => {
+        console.log(decode(message.data))
         if (typeof message.data === 'string') {
             callback(decode(message.data))
         }
@@ -33,8 +34,8 @@ function listen(callback) {
 
 function decode(data) {
     try {
-      return JSON.parse(data)
+        return JSON.parse(data)
     } catch (error) {
-      return data
+        return data
     }
-  }
+}

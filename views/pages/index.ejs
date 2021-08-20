@@ -35,8 +35,13 @@
         listen(message => {
             if(message && message.added) {
                 let output = document.getElementById("output")
-                output.innerText = message
+                output.innerHTML = `added: ${message.added} <br /> videos: ${message.videos} <br /> errors: ${message.errors}`
             }
+            // TESTING WS
+            // if(message && message.test) {
+            //     let output = document.getElementById("output")
+            //     output.innerHTML = `added: ${message.test} <br />`                
+            // }
         })
     </script>
 </body>
