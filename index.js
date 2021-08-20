@@ -56,12 +56,13 @@ app.post('/', async (req, res) => {
         if (req.body.playlist && req.body.videos) {
             console.log('playlist:', req.body.playlist)
             let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',')
+            console.log(videoIds)
             if (client.auth && client.auth.credentials) {
                 let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
                 Promise.allSettled(videosToAdd).then(results => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
-                    let output = `added ${succeeded.length}/${videoIds.length} | errors: ${JSON.stringify(failed)}`
+                    let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${JSON.stringify(videoIds)} <br /> errors: ${JSON.stringify(failed)}`
                     res.send(output)
                 })
             }
