@@ -1,4 +1,4 @@
-const WS_URL = location.origin.replace(/^http/, 'ws') + ":3000"
+const WS_URL = location.origin.replace(/^http/, 'ws')
 options = {
     connectionTimeout: 1000,
     // maxRetries: 10,
