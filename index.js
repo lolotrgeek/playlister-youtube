@@ -11,7 +11,6 @@ const path = require('path')
 const bodyParser = require('body-parser')
 const { init, send } = require('./src/router')
 const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
-const { Router } = require('express')
 
 let max_retries = 3
 
