@@ -55,15 +55,16 @@ app.post('/', async (req, res) => {
 
         if (req.body.playlist && req.body.videos) {
             console.log('playlist:', req.body.playlist)
-            let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',')
+            let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
             console.log(videoIds)
             if (client.auth && client.auth.credentials) {
-                let videosToAdd = videoIds.filter(videoId => typeof videoId === 'string' && videoId.length > 0).map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
+                let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
                 Promise.allSettled(videosToAdd).then(results => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
-                    let retries = failed.filter(fail => fail.reason.code === 500).map(fail =>  addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
+                    let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
                     Promise.allSettled(retries).then(retried => {
+                        console.log('retrying: ', failed)
                         succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
                         failed = retried.filter(result => result.status === "rejected")
                         let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${failed}`
