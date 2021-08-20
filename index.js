@@ -18,13 +18,12 @@ let credentials
 let token
 let client
 let status = false // false = not authenticated, true = authenticated
-let output
+let error
 
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
-    let error
     console.log('new get: ', req.query)
     if (req.query.code) {
         // successful OAuth2 post
@@ -33,8 +32,9 @@ app.get('/', async (req, res) => {
             try {
                 let updating = client.auth
                 client.auth = await getNewToken(req.query.code, updating)
-            } catch (error) {
+            } catch (err) {
                 console.log(error)
+                let error = err
             }
         }
     }
@@ -49,7 +49,7 @@ app.get('/', async (req, res) => {
         client = await authorize(credentials, token)
         if (client && client.auth) status = true
     }
-    res.render('pages/index', { client, status, output, error })
+    res.render('pages/index', { client, status, error })
 })
 
 app.get('/about', (req, res) => {
@@ -61,7 +61,7 @@ app.get("/sockets.js", (req, res) => res.sendFile(path.resolve(__dirname, "src/s
 
 app.post('/', async (req, res) => {
     try {
-        res.render('pages/index', { client, status, output, error })
+        res.render('pages/index', { client, status, error })
 
         if (req.body.auth) {
             console.log(req.body.auth)
@@ -106,7 +106,7 @@ app.post('/', async (req, res) => {
 
                     Retrier().then(result => {
                         // todo: show each video request working
-                        output = {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)}
+                        let output = {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)}
                         console.log(output)
                         send("CLIENT", output)
                     })
@@ -122,7 +122,7 @@ app.post('/', async (req, res) => {
         }
     } catch (err) {
         console.error(err)
-        res.send(err)
+        let error = err
     }
 
 })
