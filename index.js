@@ -66,7 +66,7 @@ app.post('/', async (req, res) => {
                     
                     const Retrier = () => new Promise ((resolve, reject) => {
                         let count = 0
-                        let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
+                        let retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
                         let retrying = setInterval(() => {
                             if(count === max_retries) {clearInterval(retrying); resolve({succeeded, failed, count})}
                             if(failed.length === 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
