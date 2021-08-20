@@ -9,8 +9,9 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const { send } = require('./src/router')
+const { init, send } = require('./src/router')
 const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
+const { Router } = require('express')
 
 let max_retries = 3
 
@@ -61,8 +62,6 @@ app.get("/sockets.js", (req, res) => res.sendFile(path.resolve(__dirname, "src/s
 
 app.post('/', async (req, res) => {
     try {
-        res.render('pages/index', { client, status, error })
-
         if (req.body.auth) {
             console.log(req.body.auth)
             credentials = await getCredentials()
@@ -71,6 +70,7 @@ app.post('/', async (req, res) => {
         }
 
         if (req.body.playlist && req.body.videos) {
+            res.render('pages/index', { client, status, error })
             console.log('playlist:', req.body.playlist)
             let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
             console.log(videoIds)
@@ -118,13 +118,14 @@ app.post('/', async (req, res) => {
             console.log('Unparsed post: ', req.body)
             if (token && client && client.auth) status = true
             else status = false
-
+            res.render('pages/index', { client, status, error })
         }
     } catch (err) {
         console.error(err)
-        let error = err
-    }
+        error = err
+        res.render('pages/index', { client, status, error })
 
+    }
 })
 
 app.listen(port, () => {
