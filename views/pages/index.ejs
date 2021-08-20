@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head'); %>
+</head>
+
+<body class="container">
+
+    <header>
+        <%- include('../partials/header'); %>
+    </header>
+
+    <main>
+        <div class="jumbotron">
+            <h1>Welcome.</h1>
+            <p>Add Videos to YouTube Playlists</p>
+        </div>
+        <p>
+            <%= status ? "Authorized!" : " Not Authorized!" %>
+        </p>
+        <div>
+            <%- include('../partials/authorize'); %>
+            <%- include('../partials/add'); %>
+
+        </div>
+    </main>
+
+    <footer>
+        <%- include('../partials/footer'); %>
+    </footer>
+
+</body>
+
+</html>

@@ -16,9 +16,12 @@ let credentials
 let token
 let client
 
+app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
+    let error
+    let status = false
     console.log('new get: ', req.query)
     if (req.query.code) {
         // successful OAuth2 post
@@ -36,17 +39,18 @@ app.get('/', async (req, res) => {
     try {
         if (!credentials) credentials = await getCredentials()
         token = await getToken()
-    } catch (error) {
-        res.sendFile(path.join(__dirname, '/index.html'))
+    } catch (err) {
+        error = err
     }
     if (token) {
         client = await authorize(credentials, token)
-        if (client && client.auth) res.sendFile(path.join(__dirname, '/add.html'))
+        if(client && client.auth) status = true
     }
-    else {
-        res.sendFile(path.join(__dirname, '/index.html'))
-    }
+    res.render('pages/index', { client, status, error })
+})
 
+app.get('/about', (req, res) => {
+    res.render('pages/about')
 })
 
 app.post('/', async (req, res) => {
