@@ -9,7 +9,8 @@ const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
 const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
-const { json } = require('express')
+
+let max_retries = 3
 
 let credentials
 let token
@@ -63,14 +64,20 @@ app.post('/', async (req, res) => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
                     let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
-                    Promise.allSettled(retries).then(retried => {
-                        console.log('retrying: ', failed)
-                        succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
-                        failed = retried.filter(result => result.status === "rejected")
-                        let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
-                        res.send(output)
-                    })
-
+                    let count = 0
+                    let retrying = setInterval(() => {
+                        if(count > max_retries) clearInterval(retrying)
+                        if(retries.length <= 0) clearInterval(retrying)
+                        console.log(`retry ${count}, video count: ${retries.length} `)
+                        Promise.allSettled(retries).then(retried => {
+                            console.log('retrying: ', failed)
+                            succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
+                            failed = retried.filter(result => result.status === "rejected")
+                            let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
+                            res.send(output)
+                        })
+                        count++
+                    }, 1000)
                 })
             }
         }
