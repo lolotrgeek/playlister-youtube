@@ -9,7 +9,9 @@ const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
-const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./auth")
+const router = require('./src/router')
+const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
+const { Router } = require('express')
 
 let max_retries = 3
 
@@ -54,6 +56,9 @@ app.get('/', async (req, res) => {
 app.get('/about', (req, res) => {
     res.render('pages/about')
 })
+
+app.get("/reconnecting-websocket.js", (req, res) => res.sendFile(path.resolve(__dirname, "node_modules/reconnecting-websocket/dist/reconnecting-websocket-iife.js")))
+app.get("/sockets.js", (req, res) => res.sendFile(path.resolve(__dirname, "src/sockets.js")))
 
 app.post('/', async (req, res) => {
     try {
@@ -122,6 +127,12 @@ app.post('/', async (req, res) => {
     }
 
 })
+
+router.listen(message => {
+    console.log(message)
+    router.send("CLIENT", "hello")
+})
+
 
 app.listen(port, () => {
     console.log(`Playlister app listening at http://localhost:${port}`)

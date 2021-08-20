@@ -29,7 +29,13 @@
     <footer>
         <%- include('../partials/footer'); %>
     </footer>
-
+    <script src="reconnecting-websocket.js"></script>
+    <script src="sockets.js"></script>
+    <script>
+        listen(message => {
+            console.log(message)
+        })
+    </script>
 </body>
 
 </html>
