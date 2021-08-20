@@ -164,7 +164,7 @@ function addVideoToPlaylist(auth, playlistId, videoId) {
         }
       }
     }, err => {
-      if (err) reject({videoId , err})
+      if (err) reject({videoId , code: err.code, errors: err.errors})
       resolve(videoId + ' success')
     })
   })
