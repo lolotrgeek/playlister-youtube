@@ -63,17 +63,23 @@ app.post('/', async (req, res) => {
                 Promise.allSettled(videosToAdd).then(results => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
-                    let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
                     
                     const Retrier = () => new Promise ((resolve, reject) => {
                         let count = 0
+                        let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
                         let retrying = setInterval(() => {
-                            if(count > max_retries) {clearInterval(retrying); resolve({succeeded, failed, count})}
-                            if(retries.length <= 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
-                            console.log(`retry ${count}, video count: ${retries.length} `)
+                            if(count === max_retries) {clearInterval(retrying); resolve({succeeded, failed, count})}
+                            if(failed.length === 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
+                            if(retries.length === 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
+                            console.log(`retrying ${failed}, ${count}, video count: ${retries.length} `)
                             Promise.allSettled(retries).then(retried => {
-                                console.log('retrying: ', failed)
-                                succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
+                                console.log('retried: ', retried)
+                                retried.forEach((result, i) => {
+                                    if(result.status === "fulfilled") {
+                                        succeeded.push(result)
+                                        retries.splice(i,1)
+                                    }
+                                })
                                 failed = retried.filter(result => result.status === "rejected")
                             })
                             count++
