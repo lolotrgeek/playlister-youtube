@@ -1,9 +1,9 @@
 const express = require('express')
-const WebSocketServer = require("ws/lib/websocket-server")
+const { Server } = require('ws');
 
 const WSPORT = process.env.PORT || 3000
 const server = express().listen(WSPORT, () => console.log(`Websocket listening on ${WSPORT}`))
-const wsServer = new WebSocketServer({ server })
+const wsServer = new Server({ server })
 
 let clients = []
 
