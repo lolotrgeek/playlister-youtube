@@ -67,7 +67,7 @@ app.post('/', async (req, res) => {
                         console.log('retrying: ', failed)
                         succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
                         failed = retried.filter(result => result.status === "rejected")
-                        let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${failed}`
+                        let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
                         res.send(output)
                     })
 

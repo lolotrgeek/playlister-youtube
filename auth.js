@@ -65,10 +65,10 @@ function authorize(credentials, token) {
     let auth = oauth2Client
     if (token) {
       oauth2Client.credentials = token
-      resolve({auth})
+      resolve({ auth })
     } else {
       let url = await getAuthUrl(oauth2Client)
-      resolve({auth, url})
+      resolve({ auth, url })
     }
   })
 }
@@ -151,22 +151,24 @@ function getChannel(auth) {
 function addVideoToPlaylist(auth, playlistId, videoId) {
   return new Promise((resolve, reject) => {
     const service = google.youtube('v3')
-    service.playlistItems.insert({
-      auth: auth,
-      part: 'snippet',
-      requestBody: {
-        snippet: {
-          playlistId: playlistId,
-          resourceId: {
-            kind: "youtube#video",
-            videoId: videoId
+    setTimeout(() => {
+      service.playlistItems.insert({
+        auth: auth,
+        part: 'snippet',
+        requestBody: {
+          snippet: {
+            playlistId: playlistId,
+            resourceId: {
+              kind: "youtube#video",
+              videoId: videoId
+            }
           }
         }
-      }
-    }, err => {
-      if (err) reject({videoId , code: err.code, errors: err.errors})
-      resolve(videoId + ' success')
-    })
+      }, err => {
+        if (err) reject({ videoId, code: err.code, errors: err.errors })
+        resolve(videoId + ' success')
+      })
+    }, 500)
   })
 }
 
