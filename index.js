@@ -64,20 +64,27 @@ app.post('/', async (req, res) => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
                     let retries = failed.filter(fail => fail.reason.code === 500).map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId))
-                    let count = 0
-                    let retrying = setInterval(() => {
-                        if(count > max_retries) clearInterval(retrying)
-                        if(retries.length <= 0) clearInterval(retrying)
-                        console.log(`retry ${count}, video count: ${retries.length} `)
-                        Promise.allSettled(retries).then(retried => {
-                            console.log('retrying: ', failed)
-                            succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
-                            failed = retried.filter(result => result.status === "rejected")
-                            let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
-                            res.send(output)
-                        })
-                        count++
-                    }, 1000)
+                    
+                    const Retrier = new Promise ((resolve, reject) => {
+                        let count = 0
+                        let retrying = setInterval(() => {
+                            if(count > max_retries) {clearInterval(retrying); resolve({succeeded, failed, count})}
+                            if(retries.length <= 0) {clearInterval(retrying); resolve({succeeded, failed, count})}
+                            console.log(`retry ${count}, video count: ${retries.length} `)
+                            Promise.allSettled(retries).then(retried => {
+                                console.log('retrying: ', failed)
+                                succeeded = [...succeeded, retried.filter(result => result.status === "fulfilled")]
+                                failed = retried.filter(result => result.status === "rejected")
+                            })
+                            count++
+                        }, 1000)
+                    })
+
+                    Retrier().then(result => {
+                        let output = `added ${succeeded.length}/${videoIds.length} <br /> videos: ${videoIds} <br /> errors: ${JSON.stringify(failed)}`
+                        res.send(output)
+                    })
+
                 })
             }
         }
