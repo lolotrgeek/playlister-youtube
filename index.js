@@ -106,6 +106,8 @@ app.post('/', async (req, res) => {
                             })
                             count++
                             interval = interval * 2
+
+                            retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
                 
                         }, 500)
                     })
