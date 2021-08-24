@@ -47,7 +47,7 @@
             }
             if( message && message.retried) {
                 let p = document.createElement("p");
-                p.innerHTML = `<br> retried: ${message.retried} <br> interval: ${message.interval} <br> count: ${message.count} <hr>`
+                p.innerHTML = `<br> retried: ${JSON.stringify(message.retried)} <br> interval: ${message.interval} <br> count: ${message.count} <hr>`
                 retried.appendChild(p)
             }
 

@@ -11,7 +11,7 @@ const bodyParser = require('body-parser')
 const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
 const { Server } = require('ws')
 
-let max_retries = 3
+let max_retries = 10
 
 let clients = []
 
@@ -81,6 +81,8 @@ app.post('/', async (req, res) => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
                     send("CLIENT", {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)})
+
+                    // TODO: make this recursive, single function
                     const Retrier = () => new Promise((resolve, reject) => {
                         let count = 0
                         let interval = 1000
@@ -206,7 +208,7 @@ function send(client, data) {
     clients.forEach((ws, i) => {
         if (clients[i] == ws && ws.readyState === 1) {
             if (ws.name === client) {
-                console.log('Sending:',  data)
+                // console.log('Sending:',  data)
                 ws.send(typeof data === 'object' ? JSON.stringify(data) : data)
             }
         } else {
