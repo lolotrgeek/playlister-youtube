@@ -103,12 +103,11 @@ app.post('/', async (req, res) => {
                                     }
                                 })
                                 failed = retried.filter(result => result.status === "rejected")
+                                count++
+                                interval = interval * 2
+                                retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
+                                send("CLIENT", {retried, interval ,count})
                             })
-                            count++
-                            interval = interval * 2
-
-                            retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
-                
                         }, 500)
                     })
 
