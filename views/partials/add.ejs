@@ -1,8 +1,10 @@
 <% if (status === true) { %>
     <form method="POST">
-        playlist id:
-        <input type="text" name="playlist" />
+        <label for="playlist">playlist id:</label>
+        <input type="text" id="playlist" name="playlist" />
+        <br />
         <textarea name="videos" rows="10" cols="100"></textarea>
+        <br/>
         <button type="submit">Submit</button>
     </form>
 <% } %>

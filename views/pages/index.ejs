@@ -24,6 +24,8 @@
             <%- include('../partials/add'); %>
         </div>
         <div id="output"></div>
+        <hr />
+        <div id="retries"></div>
     </main>
 
     <footer>
@@ -33,10 +35,21 @@
     <script src="sockets.js"></script>
     <script>
         listen(message => {
+            let output = document.getElementById("output")
+            let retrying = document.getElementById("retrying")
+
             if(message && message.added) {
-                let output = document.getElementById("output")
-                output.innerHTML = `added: ${message.added} <br /> videos: ${message.videos} <br /> errors: ${message.errors}`
+                output.innerHTML = `<br> added: ${message.added} <br /> videos: ${message.videos} <br /> errors: ${message.errors}`
             }
+
+            if(message && message.adding) {
+                output.innerHTML = `<br> adding: ${message.adding}`
+            }
+            if( message && message.retries) {
+                retries.innerHTML = `<br> retrying: ${message.retries} <br> interval: ${message.interval} <br> count: ${message.count} `
+                
+            }
+
             // TESTING WS
             // if(message && message.test) {
             //     let output = document.getElementById("output")

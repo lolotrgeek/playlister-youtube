@@ -74,6 +74,7 @@ app.post('/', async (req, res) => {
             console.log('playlist:', req.body.playlist)
             let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
             console.log(videoIds)
+            send("CLIENT", {adding: videoIds})
             if (client.auth && client.auth.credentials) {
                 let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
                 Promise.allSettled(videosToAdd).then(results => {
@@ -101,6 +102,8 @@ app.post('/', async (req, res) => {
                             })
                             count++
                             interval = interval * 2
+                            send("CLIENT", {retries, interval ,count})
+
                         }, 500)
                     })
 
