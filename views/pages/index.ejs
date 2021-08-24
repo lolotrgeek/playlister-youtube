@@ -25,7 +25,7 @@
         </div>
         <div id="output"></div>
         <hr />
-        <div id="retries"></div>
+        <div id="retried"></div>
     </main>
 
     <footer>
@@ -36,7 +36,7 @@
     <script>
         listen(message => {
             let output = document.getElementById("output")
-            let retrying = document.getElementById("retrying")
+            let retried = document.getElementById("retried")
 
             if(message && message.added) {
                 output.innerHTML = `<br> added: ${message.added} <br /> videos: ${message.videos} <br /> errors: ${message.errors}`
@@ -45,9 +45,10 @@
             if(message && message.adding) {
                 output.innerHTML = `<br> adding: ${message.adding}`
             }
-            if( message && message.retries) {
-                retries.innerHTML = `<br> retrying: ${message.retries} <br> interval: ${message.interval} <br> count: ${message.count} `
-                
+            if( message && message.retried) {
+                let p = document.createElement("p");
+                p.innerHTML = `<br> retried: ${message.retried} <br> interval: ${message.interval} <br> count: ${message.count} <hr>`
+                retried.appendChild(p)
             }
 
             // TESTING WS

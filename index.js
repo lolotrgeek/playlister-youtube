@@ -80,7 +80,7 @@ app.post('/', async (req, res) => {
                 Promise.allSettled(videosToAdd).then(results => {
                     let succeeded = results.filter(result => result.status === "fulfilled")
                     let failed = results.filter(result => result.status === "rejected")
-
+                    send("CLIENT", {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)})
                     const Retrier = () => new Promise((resolve, reject) => {
                         let count = 0
                         let interval = 1000
@@ -90,7 +90,9 @@ app.post('/', async (req, res) => {
                             if (failed.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
                             if (retries.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
                             console.log(`Retry ${count}, video count: ${retries.length}, interval: ${interval} `)
+                            send("CLIENT", {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)})
                             Promise.allSettled(retries).then(retried => {
+                                send("CLIENT", {retried, interval ,count})
                                 console.log('retried: ', retried)
                                 retried.forEach((result, i) => {
                                     if (result.status === "fulfilled") {
@@ -102,8 +104,7 @@ app.post('/', async (req, res) => {
                             })
                             count++
                             interval = interval * 2
-                            send("CLIENT", {retries, interval ,count})
-
+                
                         }, 500)
                     })
 
