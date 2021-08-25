@@ -3,7 +3,7 @@ const { addVideoToPlaylist } = require("./auth")
 const parseVideoIds = videos => videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
 
 
-function addVideosToPlaylist(playlist, videoIds, interval) {
+function addVideosToPlaylist(client, playlist, videoIds, interval) {
     return new Promise(async (resolve, reject) => {
         console.log('Adding:', videoIds, "to", playlist)
 
@@ -31,7 +31,7 @@ function addVideosToPlaylist(playlist, videoIds, interval) {
                 let retryVideos = failed.map(failure => failure.reason.videoId)
                 interval = interval * 2
                 count++
-                await addVideoToPlaylist(playlist, retryVideos, interval)
+                await addVideoToPlaylist(client.auth, playlist, retryVideos, interval)
                 resolve(results)
             }
         } catch (error) {

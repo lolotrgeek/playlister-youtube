@@ -75,7 +75,7 @@ app.post('/', async (req, res) => {
             if (client.auth && client.auth.credentials) {
                 let videoIds = parseVideoIds(req.body.videos)
                 send("CLIENT", { adding: videoIds })
-                let result = await addVideosToPlaylist(req.body.playlist, videoIds)
+                let result = await addVideosToPlaylist(client, req.body.playlist, videoIds)
                 let output = { added: `${succeeded.length}/${videoIds.length}`, videos: videoIds, errors: failed }
                 console.log(output)
                 send("CLIENT", output)
