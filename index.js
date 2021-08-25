@@ -2,16 +2,16 @@
 let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
 const express = require('express')
+const { Server } = require('ws')
 const ejs = require('ejs')
 const app = express()
 const port = process.env.PORT || 80
 const path = require('path')
 const bodyParser = require('body-parser')
 // const { send } = require('./src/router')
-const { authorize, getToken, getNewToken, getCredentials, addVideoToPlaylist } = require("./src/auth")
-const { Server } = require('ws')
+const { authorize, getToken, getNewToken, getCredentials } = require("./src/auth")
+const { addVideosToPlaylist, parseVideoIds } = require('./src/app')
 
-let max_retries = 10
 
 let clients = []
 
@@ -71,53 +71,14 @@ app.post('/', async (req, res) => {
 
         if (req.body.playlist && req.body.videos) {
             res.render('pages/index', { client, status, error })
-            console.log('playlist:', req.body.playlist)
-            let videoIds = req.body.videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
-            console.log(videoIds)
-            send("CLIENT", {adding: videoIds})
+
             if (client.auth && client.auth.credentials) {
-                let videosToAdd = videoIds.map(videoId => addVideoToPlaylist(client.auth, playlist, videoId))
-                Promise.allSettled(videosToAdd).then(results => {
-                    let succeeded = results.filter(result => result.status === "fulfilled")
-                    let failed = results.filter(result => result.status === "rejected")
-                    send("CLIENT", {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)})
-
-                    // TODO: make this recursive, single function
-                    const Retrier = () => new Promise((resolve, reject) => {
-                        let count = 0
-                        let interval = 1000
-                        let retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
-                        let retrying = setInterval(() => {
-                            if (count === max_retries) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
-                            if (failed.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
-                            if (retries.length === 0) { clearInterval(retrying); resolve({ succeeded, failed, count }) }
-                            console.log(`Retry ${count}, video count: ${retries.length}, interval: ${interval} `)
-                            send("CLIENT", {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)})
-                            Promise.allSettled(retries).then(retried => {
-                                send("CLIENT", {retried, interval ,count})
-                                console.log('retried: ', retried)
-                                retried.forEach((result, i) => {
-                                    if (result.status === "fulfilled") {
-                                        succeeded.push(result)
-                                        retries.splice(i, 1)
-                                    }
-                                })
-                                failed = retried.filter(result => result.status === "rejected")
-                                count++
-                                interval = interval * 2
-                                retries = failed.map(fail => addVideoToPlaylist(client.auth, playlist, fail.reason.videoId, interval))
-                                send("CLIENT", {retried, interval ,count})
-                            })
-                        }, 500)
-                    })
-
-                    Retrier().then(result => {
-                        // todo: show each video request working
-                        let output = {added: `${succeeded.length}/${videoIds.length}`,  videos: videoIds, errors: JSON.stringify(failed)}
-                        console.log(output)
-                        send("CLIENT", output)
-                    })
-                })
+                let videoIds = parseVideoIds(req.body.videos)
+                send("CLIENT", { adding: videoIds })
+                let result = await addVideosToPlaylist(req.body.playlist, videoIds)
+                let result = { added: `${succeeded.length}/${videoIds.length}`, videos: videoIds, errors: failed }
+                console.log(result)
+                send("CLIENT", result)
             }
         }
 
@@ -152,7 +113,7 @@ listen(message => {
  * @param {function} callback - do something with incoming message, 
  * returning a string from the callback will send that string as a reply to sender
  */
- function listen(callback) {
+function listen(callback) {
     // send...
     wsServer.on("connection", (ws, req) => {
         ws.on("message", data => parseMessage(ws, data, callback))
