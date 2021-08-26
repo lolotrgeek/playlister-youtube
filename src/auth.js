@@ -29,8 +29,10 @@ function getToken() {
   return new Promise((resolve, reject) => {
     fs.readFile(TOKEN_PATH, function (err, token) {
       if (err) {
+        console.log('Unable to Find Token: ' + TOKEN_PATH)
         reject(err)
       } else {
+        console.log('Found Token: ' + TOKEN_PATH)
         resolve(JSON.parse(token))
       }
     })
@@ -67,8 +69,13 @@ function authorize(credentials, token) {
       oauth2Client.credentials = token
       resolve({ auth })
     } else {
-      let url = await getAuthUrl(oauth2Client)
-      resolve({ auth, url })
+      try {
+        let url = await getAuthUrl(oauth2Client)
+        resolve({ auth, url })
+      } catch (error) {
+        reject(error)
+      }
+
     }
   })
 }
@@ -84,15 +91,20 @@ function authorize(credentials, token) {
  */
 function getNewToken(code, oauth2Client) {
   return new Promise((resolve, reject) => {
-    oauth2Client.getToken(code, async (err, token) => {
-      if (err) {
-        reject('Error while trying to retrieve access token', err)
-        return
-      }
-      oauth2Client.credentials = token
-      await storeToken(token)
-      resolve(oauth2Client)
-    })
+    try {
+      oauth2Client.getToken(code, async (err, token) => {
+        if (err) {
+          reject('Error while trying to retrieve access token', err)
+          return
+        }
+        oauth2Client.credentials = token
+        await storeToken(token)
+        resolve(oauth2Client)
+      })
+    } catch (error) {
+      reject(error)
+    }
+
 
   })
 
@@ -150,7 +162,7 @@ function getChannel(auth) {
 
 function addVideoToPlaylist(auth, playlistId, videoId, interval) {
   return new Promise((resolve, reject) => {
-    if(!interval) interval = 500
+    if (!interval) interval = 500
     const service = google.youtube('v3')
     setTimeout(() => {
       service.playlistItems.insert({

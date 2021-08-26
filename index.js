@@ -10,7 +10,7 @@ const path = require('path')
 const bodyParser = require('body-parser')
 // const { send } = require('./src/router')
 const { authorize, getToken, getNewToken, getCredentials } = require("./src/auth")
-const { addVideosToPlaylist, parseVideoIds } = require('./src/app')
+const { addVideos, parseVideoIds } = require('./src/app')
 
 
 let clients = []
@@ -26,16 +26,39 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
     console.log('new get: ', req.query)
+    // attempt getting stored token
+    try {
+        if (!credentials) credentials = await getCredentials()
+        token = await getToken()
+    } catch (err) {
+        error = err
+        res.render('pages/index', { status, error })
+    }
+    if (token) {
+        client = await authorize(credentials, token)
+        if (client && client.auth) {
+            status = true
+            res.redirect('/add')
+        }
+    }
+
+})
+app.get('/add', async (req, res) => {
+    console.log('[ADD] new get: ', req.query)
     if (req.query.code) {
         // successful OAuth2 post
-        console.log('new token:', req.query.code)
+        console.log('[ADD] new token:', req.query.code)
         if (client && client.auth) {
             try {
                 let updating = client.auth
                 client.auth = await getNewToken(req.query.code, updating)
+                console.log('[ADD] authenticated: ', client.auth)
+                res.render('pages/add', { status, error })
+
             } catch (err) {
-                console.log(error)
+                console.log('[ADD]',err)
                 let error = err
+                res.redirect('/')
             }
         }
     }
@@ -44,56 +67,100 @@ app.get('/', async (req, res) => {
         if (!credentials) credentials = await getCredentials()
         token = await getToken()
     } catch (err) {
+        console.log('[ADD]',err)
         error = err
+        res.redirect('/')
     }
     if (token) {
-        client = await authorize(credentials, token)
-        if (client && client.auth) status = true
-    }
-    res.render('pages/index', { client, status, error })
-})
-
-app.get('/about', (req, res) => {
-    res.render('pages/about')
-})
-
-app.get("/reconnecting-websocket.js", (req, res) => res.sendFile(path.resolve(__dirname, "node_modules/reconnecting-websocket/dist/reconnecting-websocket-iife.js")))
-app.get("/sockets.js", (req, res) => res.sendFile(path.resolve(__dirname, "src/sockets.js")))
-
-app.post('/', async (req, res) => {
-    try {
-        if (req.body.auth) {
-            console.log(req.body.auth)
-            credentials = await getCredentials()
-            client = await authorize(credentials, null)
-            if (typeof client.url === "string") res.redirect(client.url)
+        try {
+            client = await authorize(credentials, token)
+            if (client && client.auth) {
+                status = true
+                res.render('pages/add', { status, error })
+            }
+        } catch (err) {
+            console.log('[ADD]',err)
+            error = err
+            res.redirect('/')
         }
 
-        if (req.body.playlist && req.body.videos) {
-            res.render('pages/index', { client, status, error })
+    }
 
-            if (client.auth && client.auth.credentials) {
-                let videoIds = parseVideoIds(req.body.videos)
-                send("CLIENT", { adding: videoIds })
-                let result = await addVideosToPlaylist(client, req.body.playlist, videoIds)
-                let output = { added: `${succeeded.length}/${videoIds.length}`, videos: videoIds, result }
-                console.log(output)
-                send("CLIENT", output)
+})
+
+app.get('/about', (req, res) => res.render('pages/about', { status, error }))
+app.get("/reconnecting-websocket.js", (req, res) => res.sendFile(path.resolve(__dirname, "node_modules/reconnecting-websocket/dist/reconnecting-websocket-iife.js")))
+app.get("/sockets.js", (req, res) => res.sendFile(path.resolve(__dirname, "src/sockets.js")))
+app.get("/bootstrap.min.css", (req, res) => res.sendFile(path.resolve(__dirname, "bootstrap.min.css")))
+
+// TODO: add react... to handle auth and state
+
+app.post('/', async (req, res) => {
+    console.log('[INDEX] POST: ', req.body)
+    if (req.body.auth) {
+        // authorizing
+        if (req.body.auth === true) {
+            status = true
+            res.redirect('/add')
+        } else {
+            try {
+                credentials = await getCredentials()
+                client = await authorize(credentials, null)
+                if (typeof client.url === "string") res.redirect(client.url)
+            }
+            catch (err) {
+                console.error('[INDEX] Auth Rejected', err)
+                error = err
+                res.render('pages/index', { status, error })
             }
         }
 
-        else {
-            console.log('Unparsed post: ', req.body)
-            if (token && client && client.auth) status = true
-            else status = false
-            res.render('pages/index', { client, status, error })
-        }
-    } catch (err) {
-        console.error(err)
-        error = err
-        res.render('pages/index', { client, status, error })
-
     }
+
+    else {
+        console.log('[INDEX] Unparsed post: ', req.body)
+        if (token && client && client.auth) {
+            status = true
+            res.redirect('/add')
+        }
+        else {
+            status = false
+            res.render('pages/index', { status, error })
+        }
+    }
+
+})
+
+app.post('/add', async (req, res) => {
+    console.log('[ADD] POST: ', req.body)
+    if (req.body.playlist && req.body.videos && status && client && client.auth && client.auth.credentials) {
+        try {
+            res.render('pages/add', { status, error })
+            let videoIds = parseVideoIds(req.body.videos)
+            send("CLIENT", { adding: videoIds })
+            let result = await addVideos(client, req.body.playlist, videoIds)
+            let output = { added: result }
+            console.log('[ADD] result:', output)
+            send("CLIENT", output)
+        } catch (err) {
+            console.error('[ADD] Rejected', err)
+            error = err
+            res.redirect('/')
+        }
+    }
+
+    else {
+        console.log('[ADD] Unparsed post: ', req.body)
+        if (token && client && client.auth) {
+            status = true
+            res.render('pages/add', { status, error })
+        }
+        else {
+            status = false
+            res.redirect('/')
+        }
+    }
+
 })
 
 const server = app.listen(port, () => {
@@ -103,6 +170,7 @@ const server = app.listen(port, () => {
 const wsServer = new Server({ server })
 listen(message => {
     console.log(message)
+    if (message && message.name === "CLIENT") send("CLIENT", { status })
 })
 // TESTING WS
 // setInterval(() => {
