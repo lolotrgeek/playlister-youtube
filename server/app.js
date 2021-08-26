@@ -1,8 +1,7 @@
-const { addVideoToPlaylist } = require("./auth")
+const { addVideoToPlaylist } = require("./api")
 
 const parseVideoIds = videos => videos.trim().replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0)
 
-// TODO: fix adding videos
 function addVideos(client, playlist, videoIds, interval) {
     return new Promise(async (resolve, reject) => {
         console.log('[PLAYLIST] Adding: ', videoIds)

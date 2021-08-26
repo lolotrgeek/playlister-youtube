@@ -1,7 +1,6 @@
 var fs = require('fs')
 const path = require('path')
 var { google } = require('googleapis')
-const e = require('express')
 var OAuth2 = google.auth.OAuth2
 
 // If modifying these scopes, delete your previously saved credentials
@@ -118,7 +117,22 @@ function storeToken(token) {
 
 }
 
-
+function Authorize(code) {
+  try {
+      credentials = await getCredentials()
+      client = await newClient(credentials)
+      let token = code ? getNewToken(code, client) : await getToken(client)
+      if (token) {
+          client.credentials = token
+          res.json(client)
+      } else {
+          let authURL = getAuthUrl()
+          res.redirect(authURL)
+      }
+  } catch (err) {
+      console.log(err)
+  }
+}
 
 /**
  * Lists the names and IDs of up to 10 files.
