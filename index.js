@@ -10,7 +10,7 @@ const path = require('path')
 const bodyParser = require('body-parser')
 // const { send } = require('./src/router')
 const { authorize, getToken, getNewToken, getCredentials } = require("./src/auth")
-const { addVideos, parseVideoIds } = require('./src/app')
+const { addVideos, parseVideoIds } = require('./src/server/app')
 
 
 let clients = []
