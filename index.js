@@ -20,7 +20,7 @@ let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")))
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "client/build", "index.html")))
 app.get("/api", (req, res) => res.json({ message: "Hello from server!" }))
 
 const server = app.listen(port, () => console.log(`Playlister app listening at http://localhost:${port}`))
