@@ -1,10 +1,3 @@
-const express = require('express')
-const { Server } = require('ws')
-
-const WSPORT = process.env.WSPORT || 3000
-const server = express().listen(WSPORT, () => console.log(`Websocket listening on ${WSPORT}`))
-const wsServer = new Server({ server })
-
 let clients = []
 
 /**
@@ -12,9 +5,9 @@ let clients = []
  * @param {function} callback - do something with incoming message, 
  * returning a string from the callback will send that string as a reply to sender
  */
-function listen(callback) {
+function listen(server, callback) {
     // send...
-    wsServer.on("connection", (ws, req) => {
+    server.on("connection", (ws, req) => {
         ws.on("message", data => parseMessage(ws, data, callback))
         ws.on("error", error => console.log(` WebSocket error observed: ${error}`))
         // TODO: implement closed retries?
@@ -44,16 +37,6 @@ function parseMessage(ws, data, callback) {
 
 }
 
-wsServer.broadcast = function broadcast(msg) {
-    wsServer.clients.forEach(function each(client) {
-        client.send(msg)
-    })
-}
-
-function broadcast(msg) {
-    wsServer.broadcast(msg)
-}
-
 function reply(ws, data) {
     if (typeof data === 'string') {
         ws.send(data)
@@ -69,7 +52,7 @@ function send(client, data) {
     clients.forEach((ws, i) => {
         if (clients[i] == ws && ws.readyState === 1) {
             if (ws.name === client) {
-                console.log(` Sending: ${data}`)
+                // console.log('Sending:',  data)
                 ws.send(typeof data === 'object' ? JSON.stringify(data) : data)
             }
         } else {
@@ -87,5 +70,4 @@ function decode(data) {
     }
 }
 
-
-module.exports = { listen, reply, broadcast, send }
+module.exports = {listen, send, reply}
