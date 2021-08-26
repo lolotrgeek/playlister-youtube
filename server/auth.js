@@ -1,7 +1,7 @@
 var fs = require('fs')
 const path = require('path')
-var readline = require('readline')
 var { google } = require('googleapis')
+const e = require('express')
 var OAuth2 = google.auth.OAuth2
 
 // If modifying these scopes, delete your previously saved credentials
@@ -22,15 +22,38 @@ function getCredentials() {
       resolve(JSON.parse(content))
     })
   })
-
 }
 
+/**
+ * Create an OAuth2 client with the given credentials
+ * @param {Object} credentials 
+ * @returns Promise that resolves an OAuth2 client or Error
+ */
+function newClient(credentials) {
+  return new Promise((resolve, reject) => {
+    try {
+      let clientSecret = credentials.installed.client_secret
+      let clientId = credentials.installed.client_id
+      let redirectUrl = credentials.installed.redirect_uris[0]
+      let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl)
+      let client = oauth2Client
+      resolve(client)
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+/**
+ * Get a stored Token 
+ * @returns
+ */
 function getToken() {
   return new Promise((resolve, reject) => {
-    fs.readFile(TOKEN_PATH, function (err, token) {
+    fs.readFile(TOKEN_PATH, (err, token) => {
       if (err) {
         console.log('Unable to Find Token: ' + TOKEN_PATH)
-        reject(err)
+        resolve(null)
       } else {
         console.log('Found Token: ' + TOKEN_PATH)
         resolve(JSON.parse(token))
@@ -39,75 +62,37 @@ function getToken() {
   })
 }
 
-function getAuthUrl(oauth2Client, callback) {
-  return new Promise((resolve, reject) => {
-    var authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES
-    })
-    console.log('Authorize this app by visiting this url: ', authUrl)
-    resolve(authUrl)
+/**
+ * Generate an Authorization URL
+ * @param {*} oauth2Client 
+ * @returns 
+ */
+function getAuthUrl(oauth2Client) {
+  var authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES
   })
-
+  console.log('Authorize this app by visiting this url: ', authUrl)
+  return authUrl
 }
 
+
 /**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
+ * Use auth code after prompting for user authorization to get new Token
  *
- * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
+ * @param {string} code the code to convert to token
+ * @param {google.auth.OAuth2} client The OAuth2 client to get token for.
  */
-function authorize(credentials, token) {
-  return new Promise(async (resolve, reject) => {
-    var clientSecret = credentials.installed.client_secret
-    var clientId = credentials.installed.client_id
-    var redirectUrl = credentials.installed.redirect_uris[0]
-    var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl)
-    let auth = oauth2Client
-    if (token) {
-      oauth2Client.credentials = token
-      resolve({ auth })
-    } else {
-      try {
-        let url = await getAuthUrl(oauth2Client)
-        resolve({ auth, url })
-      } catch (error) {
-        reject(error)
+function getNewToken(code, client) {
+  return new Promise((resolve, reject) => {
+    client.getToken(code, async (err, token) => {
+      if (err) {
+        reject('Error while trying to retrieve access token', err)
+        return
       }
-
-    }
+      resolve(token)
+    })
   })
-}
-
-
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- *
- * @param {google.auth.OAuth2} oauth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback to call with the authorized
- *     client.
- */
-function getNewToken(code, oauth2Client) {
-  return new Promise((resolve, reject) => {
-    try {
-      oauth2Client.getToken(code, async (err, token) => {
-        if (err) {
-          reject('Error while trying to retrieve access token', err)
-          return
-        }
-        oauth2Client.credentials = token
-        await storeToken(token)
-        resolve(oauth2Client)
-      })
-    } catch (error) {
-      reject(error)
-    }
-
-
-  })
-
 }
 
 /**
@@ -132,6 +117,8 @@ function storeToken(token) {
   })
 
 }
+
+
 
 /**
  * Lists the names and IDs of up to 10 files.
@@ -185,4 +172,4 @@ function addVideoToPlaylist(auth, playlistId, videoId, interval) {
   })
 }
 
-module.exports = { getCredentials, getToken, authorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
+module.exports = { getCredentials, newClient, getToken, getAuthUrl, Authorize, getNewToken, storeToken, getChannel, addVideoToPlaylist }
