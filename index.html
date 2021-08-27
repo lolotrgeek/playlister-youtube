@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Youtube Playlister</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+
+
+  <button id="sign-in-or-out-button" style="margin-left: 25px">Sign In/Authorize</button>
+  <button id="revoke-access-button" style="display: none; margin-left: 25px">Revoke access</button>
+
+  <div id="auth-status" style="display: inline; padding-left: 25px"></div>
+  <hr>
+
+
+  <div id="add" style="display: none;">
+    <label>playlist id:</label>
+    <input type="text" id="playlist" name="playlist" value="PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7" />
+    <br />
+    <textarea id="videos" rows="10" cols="100">
+      dRe_rS19E04,
+      3DNCxsFVpAQ,
+      CNOcy-mxO6g,
+      NiVMw1HG_vE,
+      KAqs2gRt14M,
+      8kHpMCDCbUA,
+      waLwj9z8zHw,
+      vKPL2F9UaVM,</textarea>
+    <br />
+    <button id="submit">Submit</button>
+  </div>
+
+  <script src="src/app.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
+    onreadystatechange="if (this.readyState === 'complete') this.onload()">
+  </script>
+
+
+</body>
+
+</html>
