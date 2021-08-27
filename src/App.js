@@ -86,17 +86,49 @@ const parseVideoIds = videos => {
   return videos.replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0).map(videoId => videoId.trim())
 }
 
+let timeout = 500
+let iteration = 0 // number of requests before ramp
+let ramp = 3 // number of iterations until timeout is ramped
+
+const backoff = () => {
+  if(iteration > ramp) {
+    iteration = 0
+    console.log(' Backing off timeout:', timeout)
+    return timeout * 2
+  }
+  return timeout
+}
+
+function backOffInsertVideoToPlaylist(videoId, playlistId) {
+  timeout = backoff()
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      insertVideoToPlaylist(videoId, playlistId).then(result => {
+        resolve(result)
+        iteration++
+      }).catch (err => reject(err))
+    }, timeout)
+  })
+
+
+}
+
 function AddVideos(videoIds, playlistId) {
   return new Promise(async (resolve, reject) => {
-    if (!Array.isArray(videoIds)) reject('Invalid videoIds:' + videoIds)
-    if (typeof playlistId !== "string") reject('Invalid PlaylistId:' + playlistId)
-    console.log(videoIds)
-    let videosToAdd = videoIds.map(videoId => insertVideoToPlaylist(videoId, playlistId))
-    let results = await Promise.allSettled(videosToAdd)
-    console.log(results)
-    let succeeded = results.filter(result => result.status === "fulfilled")
-    let failed = results.filter(result => result.status === "rejected")
-    console.log(`[PLAYLIST] added: ${succeeded.length}/${videosToAdd.length}`, { videos: videoIds, errors: failed.map(failure => failure.reason.result.code)})
+    try {
+      if (!Array.isArray(videoIds)) reject('Invalid videoIds:' + videoIds)
+      if (typeof playlistId !== "string") reject('Invalid PlaylistId:' + playlistId)
+      console.log(videoIds)
+      let videosToAdd = videoIds.map(videoId => backOffInsertVideoToPlaylist(videoId, playlistId))
+      let results = await Promise.allSettled(videosToAdd)
+      console.log(results)
+      let succeeded = results.filter(result => result.status === "fulfilled")
+      let failed = results.filter(result => result.status === "rejected")
+      console.log(`[PLAYLIST] added: ${succeeded.length}/${videosToAdd.length}`, { videos: videoIds, errors: failed.map(failure => failure.reason.result.code)})
+    }catch(err){
+      console.log(err)
+    }
+
   })
 
 }
