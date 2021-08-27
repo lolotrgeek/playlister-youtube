@@ -32,7 +32,17 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
+}
+
+#auth-status {
+  display: inline;
+  padding-left: 25px
+}
+
+#auth-status button {
+  margin-left: 25px
 }
