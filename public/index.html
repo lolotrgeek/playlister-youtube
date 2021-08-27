@@ -50,56 +50,71 @@
       gapi.load('client:auth2', initClient)
     }
 
-    function initClient() {
-      // In practice, your app can retrieve one or more discovery documents.
-      var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest'
+    function authorizeClient() {
+      GoogleAuth = gapi.auth2.getAuthInstance()
 
-      // Initialize the gapi.client object, which app uses to make API requests.
-      // Get API key and client ID from API Console.
-      // 'scope' field specifies space-delimited list of access scopes.
-      gapi.client.init({
-        'apiKey': 'AIzaSyCB3p3A2mcCaI1lVvB0H9HRzY529sH9lzI',
-        'clientId': '638260735569-crj2nbi8t3uimh1g7lcaefrc597gqg2u.apps.googleusercontent.com',
-        'discoveryDocs': [discoveryUrl],
-        'scope': SCOPE
-      }).then(function () {
-        GoogleAuth = gapi.auth2.getAuthInstance()
+      // Listen for sign-in state changes.
+      GoogleAuth.isSignedIn.listen(updateSigninStatus)
 
-        // Listen for sign-in state changes.
-        GoogleAuth.isSignedIn.listen(updateSigninStatus)
+      // Handle initial sign-in state. (Determine if user is already signed in.)
+      var user = GoogleAuth.currentUser.get()
+      setSigninStatus()
 
-        // Handle initial sign-in state. (Determine if user is already signed in.)
-        var user = GoogleAuth.currentUser.get()
-        setSigninStatus()
+      addButtons()
+    }
 
-        // Call handleAuthClick function when user clicks on
-        //      "Sign In/Authorize" button.
-        $('#sign-in-or-out-button').click(function () {
-          handleAuthClick()
-        })
-        $('#revoke-access-button').click(function () {
-          revokeAccess()
-        })
-      }).then(() => gapi.client.youtube.playlistItems.insert(
-        {
-          "part": [
-            "snippet"
-          ],
-          "resource": {
-            "snippet": {
-              "playlistId":  playlistId,
-              "resourceId": {
-                "kind": "youtube#video",
-                "videoId": videoId
-              }
-            }
-          }
-        }
-      )).then(function (response) {
-        console.log(response.result)
-      }, function (reason) {
-        console.log('Error: ' + reason.result.error.message)
+    function addButtons() {
+      // Call handleAuthClick function when user clicks on
+      //      "Sign In/Authorize" button.
+      $('#sign-in-or-out-button').click(function () {
+        handleAuthClick()
       })
+      $('#revoke-access-button').click(function () {
+        revokeAccess()
+      })
+    }
+
+    async function initClient() {
+      try {
+        // In practice, your app can retrieve one or more discovery documents.
+        var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest'
+        // Initialize the gapi.client object, which app uses to make API requests.
+        // Get API key and client ID from API Console.
+        // 'scope' field specifies space-delimited list of access scopes.
+        await gapi.client.init({
+          'apiKey': 'AIzaSyCB3p3A2mcCaI1lVvB0H9HRzY529sH9lzI',
+          'clientId': '638260735569-crj2nbi8t3uimh1g7lcaefrc597gqg2u.apps.googleusercontent.com',
+          'discoveryDocs': [discoveryUrl],
+          'scope': SCOPE
+        })
+
+        await authorizeClient()
+        let response = await insertVideoToPlaylist(videoId, playlistId)
+        console.log(response.result)
+
+      } catch (error) {
+        console.log('Error: ' + reason.result.error.message)
+      }
+    }
+
+    function insertVideoToPlaylist(videoId, playlistId) {
+      // return gapi.client.youtube.playlistItems.insert(
+      //     {
+      //         "part": [
+      //             "snippet"
+      //         ],
+      //         "resource": {
+      //             "snippet": {
+      //                 "playlistId": playlistId,
+      //                 "resourceId": {
+      //                     "kind": "youtube#video",
+      //                     "videoId": videoId
+      //                 }
+      //             }
+      //         }
+      //     }
+      // )
+      return { result: null }
     }
 
     function handleAuthClick() {
@@ -119,17 +134,22 @@
     function setSigninStatus() {
       var user = GoogleAuth.currentUser.get()
       var isAuthorized = user.hasGrantedScopes(SCOPE)
-      if (isAuthorized) {
-        $('#sign-in-or-out-button').html('Sign out')
-        $('#revoke-access-button').css('display', 'inline-block')
-        $('#auth-status').html('You are currently signed in and have granted ' +
-          'access to this app.')
-      } else {
-        $('#sign-in-or-out-button').html('Sign In/Authorize')
-        $('#revoke-access-button').css('display', 'none')
-        $('#auth-status').html('You have not authorized this app or you are ' +
-          'signed out.')
-      }
+      if (isAuthorized) authState()
+      else noAuthState()
+    }
+
+    function authState() {
+      $('#sign-in-or-out-button').html('Sign out')
+      $('#revoke-access-button').css('display', 'inline-block')
+      $('#auth-status').html('You are currently signed in and have granted ' +
+        'access to this app.')
+    }
+
+    function noAuthState() {
+      $('#sign-in-or-out-button').html('Sign In/Authorize')
+      $('#revoke-access-button').css('display', 'none')
+      $('#auth-status').html('You have not authorized this app or you are ' +
+        'signed out.')
     }
 
     function updateSigninStatus() {
