@@ -1,11 +1,17 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
+import { loadGapiInsideDOM } from '../functions/api'
+import { gapi, loadAuth2 } from 'gapi-script'
+
+let playlistId = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
+let videoId = 'jhUHlpksKoc'
 
 function Add() {
     const [playlist, setPlaylist] = useState('')
     const [videos, setVideos] = useState('')
 
     function insertVideoToPlaylist(videoId, playlistId) {
-        // return gapi.client.youtube.playlistItems.insert(
+        
+        // gapi.client.youtube.playlistItems.insert(
         //     {
         //         "part": [
         //             "snippet"
@@ -22,16 +28,20 @@ function Add() {
         //     }
         // )
         return { result: null }
-      }
+    }
 
-    const handleSubmit = (evt) => {
-        evt.preventDefault();
-        alert(`Submitting ${videos}`)
+    const handleSubmit = async event => {
+        event.preventDefault()
+        // alert(`Submitting ${videos}`)
+        
+        // const gapi = await loadGapiInsideDOM()
+        console.log(gapi)
+        // insertVideoToPlaylist(videoId, playlistId)
     }
 
     return (
         <form onSubmit={handleSubmit} >
-            <label for="playlist">playlist id:</label>
+            <label>playlist id:</label>
             <input type="text" id="playlist" name="playlist" onChange={event => setPlaylist(event.target.value)} />
             <br />
             <textarea name="videos" rows="10" cols="100" onChange={event => setVideos(event.target.value)}></textarea>
