@@ -4,6 +4,7 @@ import { gapi, loadAuth2 } from 'gapi-script'
 import { UserCard } from './UserCard'
 import './GoogleLogin.css'
 
+// FIX: https://github.com/partnerhero/gapi-script/issues/14
 
 let discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest'
 let SCOPE = 'https://www.googleapis.com/auth/youtube'
