@@ -86,12 +86,8 @@ const parseVideoIds = videos => {
   return videos.replace(/(\r\n|\n|\r)/gm, "").split(',').filter(videoId => typeof videoId === 'string' && videoId.length > 0).map(videoId => videoId.trim())
 }
 
-let timeout = 500
-let iteration = 0 // number of requests before ramp
-let ramp = 3 // number of iterations until timeout is ramped
-
 const backoff = () => {
-  if(iteration > ramp) {
+  if (iteration > ramp) {
     iteration = 0
     console.log(' Backing off timeout:', timeout)
     return timeout * 2
@@ -99,18 +95,48 @@ const backoff = () => {
   return timeout
 }
 
-function backOffInsertVideoToPlaylist(videoId, playlistId) {
-  timeout = backoff()
+function createBackOffTable(videoIds) {
+  const ramp = 3 // amount by which to ramp timeout when threshold is reached
+  let threshold = 3 // index at which to begin ramp
+  let timeout = 100
+  let max = 6400 // amount at which to cap ramp, set to -1 for infinite ramp
+
+  return videoIds.map((videoId, i) => {
+    if (max > 0 && timeout === max) return timeout
+    if (i === threshold) {
+      threshold += ramp
+      timeout = timeout * 2
+    }
+    return timeout
+  })
+}
+
+// function timeout(ms) {
+//   return new Promise(resolve => setTimeout(resolve, ms))
+// }
+// async function sleep(fn, ms, ...args) {
+//   await timeout(ms)
+//   return fn(...args)
+// }
+
+function backOffInsertVideoToPlaylist(videoId, playlistId, ms) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
+      if (iteration >= ramp) {
+        iteration = 0
+        timeout = timeout * 2
+        console.log(' Backing off timeout:', timeout)
+      }
       insertVideoToPlaylist(videoId, playlistId).then(result => {
-        resolve(result)
-        iteration++
-      }).catch (err => reject(err))
-    }, timeout)
+        results.push({ id: videoId, status: "fulfilled", result })
+        resolve(results)
+      }).catch(err => {
+        results.push({ id: videoId, status: "rejected", reason: err })
+        resolve(results)
+      })
+      iteration++
+    }, ms)
   })
-
-
 }
 
 function AddVideos(videoIds, playlistId) {
@@ -118,17 +144,20 @@ function AddVideos(videoIds, playlistId) {
     try {
       if (!Array.isArray(videoIds)) reject('Invalid videoIds:' + videoIds)
       if (typeof playlistId !== "string") reject('Invalid PlaylistId:' + playlistId)
-      console.log(videoIds)
-      let videosToAdd = videoIds.map(videoId => backOffInsertVideoToPlaylist(videoId, playlistId))
-      let results = await Promise.allSettled(videosToAdd)
-      console.log(results)
+      // console.log(videoIds)
+
+      // let videosToAdd = videoIds.map(videoId => backOffInsertVideoToPlaylist(videoId, playlistId))
+      // let results = await Promise.allSettled(videosToAdd)
+      // results = results.map((result, i) => ({ id: videoIds[i], status: result.status, reason: result.reason }))
+      
       let succeeded = results.filter(result => result.status === "fulfilled")
       let failed = results.filter(result => result.status === "rejected")
-      console.log(`[PLAYLIST] added: ${succeeded.length}/${videosToAdd.length}`, { videos: videoIds, errors: failed.map(failure => failure.reason.result.code)})
-    }catch(err){
+      console.log(`[PLAYLIST] added: ${succeeded.length}/${videoIds.length}`)
+      console.log(results)
+      resolve(results)
+    } catch (err) {
       console.log(err)
     }
-
   })
 
 }
