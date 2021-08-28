@@ -1,60 +1,37 @@
-const express = require('express')
-const app = express()
-const path = require('path')
-const bodyParser = require('body-parser')
-const { Server } = require('ws')
-
-const { Authorize, getToken, getNewToken, getCredentials, newClient, getAuthUrl } = require("./server/api")
-const { addVideos, parseVideoIds } = require('./server/app')
-const { listen, send } = require('./server/sockets')
-
-const port = process.env.PORT || 80
-
-let credentials
-let client
-let status = false // false = not authenticated, true = authenticated
-let error
+const { addVideoToPlaylist, authorize } = require('./src/api')
+const fs = require('fs')
+const videoIds = require('./videos.json')
 
 let playlist = 'PLGZwtzUnUPvi49duFUJApamEUzz2HnSg7'
+const delay = retryCount => new Promise(resolve => setTimeout(resolve, 10 ** retryCount))
 
-function Authorize(code) {
-    try {
-        credentials = await getCredentials()
-        client = await newClient(credentials)
-        let token = code ? getNewToken(code, client) : await getToken(client)
-        if (token) {
-            client.credentials = token
-            res.json(client)
-        } else {
-            let authURL = getAuthUrl()
-            res.redirect(authURL)
-        }
-    } catch (err) {
-        console.log(err)
+
+fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+    if (err) {
+        console.log('Error loading client secret file: ' + err)
+        return
     }
-}
-
-app.use(bodyParser.urlencoded({ extended: true }))
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "client/build", "index.html"))
-    if (req.query.code)  Authorize(req.query.code)
-    else console.log("Unknown Request: ", req.query)
+    authorize(JSON.parse(content), async auth => {
+        return new Promise((resolve, reject) => {
+            let results = []
+            videoIds.forEach(videoId => {
+                const getResource = async (retryCount = 0, lastError = null) => {
+                    let reason
+                    if (retryCount > 5) {
+                        results.push({ id: videoId, status: "rejected", reason})
+                        throw new Error(lastError)
+                    }
+                    try {
+                        let result = await addVideoToPlaylist(auth, videoId, playlist)
+                        results.push({ id: videoId, status: "fulfilled", result })
+                    } catch (e) {
+                        reason = e
+                        await delay(retryCount)
+                        return getResource(retryCount + 1, e)
+                    }
+                }
+            })
+            resolve(results)
+        })
+    })
 })
-
-app.get("/api", (req, res) => res.json({ message: "Hello from server!" }))
-app.post("/", async (req, res) => {
-    if(req.body.auth) Authorize()
-    else if(req.body.playlist && req.body.videos) addVideos(client, req.body.playlist, parseVideoIds(req.body.videos))
-})
-
-const server = app.listen(port, () => console.log(`Playlister app listening at http://localhost:${port}`))
-
-const wsServer = new Server({ server })
-listen(wsServer, message => {
-    console.log(message)
-    if (message && message.name === "CLIENT") send("CLIENT", { status })
-})
-// TESTING WS
-// setInterval(() => {
-//     send("CLIENT", {test: "test!"})
-// }, 1000)
