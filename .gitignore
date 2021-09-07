@@ -1,3 +1,6 @@
 .history
 /node_modules
 errors.json
+credentials/youtube-nodejs-quickstart.json
+client_secret.json
+client_secret.json

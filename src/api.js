@@ -5,9 +5,8 @@ var OAuth2 = google.auth.OAuth2
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
-var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-  process.env.USERPROFILE) + '/.credentials/'
+var SCOPES = ['https://www.googleapis.com/auth/youtube']
+var TOKEN_DIR = './credentials/'
 var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json'
 
 // Load client secrets from a local file.
@@ -89,52 +88,33 @@ function storeToken(token) {
 }
 
 /**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * Add a single video to playlist
+ * @param {Object} auth authorized client object
+ * @param {string} playlistId 
+ * @param {string} videoId 
+ * @returns 
  */
-function getChannel(auth) {
-  var service = google.youtube('v3')
-  service.channels.list({
-    auth: auth,
-    part: 'snippet,contentDetails,statistics',
-    forUsername: 'GoogleDevelopers'
-  }, function (err, response) {
-    if (err) {
-      console.log('The API returned an error: ' + err)
-      return
-    }
-    var channels = response.data.items
-    if (channels.length == 0) {
-      console.log('No channel found.')
-    } else {
-      console.log('This channel\'s ID is %s. Its title is \'%s\', and ' +
-        'it has %s views.',
-        channels[0].id,
-        channels[0].snippet.title,
-        channels[0].statistics.viewCount)
-    }
-  })
-}
-
 function addVideoToPlaylist(auth, playlistId, videoId) {
-  const service = google.youtube('v3')
-  return service.playlistItems.insert({
-    auth: auth,
-    part: 'snippet',
-    requestBody: {
-      snippet: {
-        playlistId: playlistId,
-        resourceId: {
-          kind: "youtube#video",
-          videoId: videoId
+  return new Promise((resolve, reject) => {
+    const service = google.youtube('v3')
+    service.playlistItems.insert({
+      auth: auth,
+      part: 'snippet',
+      requestBody: {
+        snippet: {
+          playlistId: playlistId,
+          resourceId: {
+            kind: "youtube#video",
+            videoId: videoId
+          }
         }
       }
-    }
-  }, err => {
-    if (err) console.log({ videoId, code: err.code, errors: err.errors })
-    console.log(videoId + ' success')
+    }, err => {
+      if (err) reject(err)
+      else resolve(videoId)
+    })
   })
+
 }
 
 module.exports = { addVideoToPlaylist, authorize }
